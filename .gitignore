@@ -1,6 +1,7 @@
 __pycache__/
 *.py[cod]
 .venv/
+venv/
 .env
 .streamlit/secrets.toml
 *.wav
@@ -11,3 +12,4 @@ __pycache__/
 *.mpeg
 *.mpga
 .DS_Store
+.pytest_cache/

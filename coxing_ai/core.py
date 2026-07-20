@@ -1,4 +1,4 @@
-"""Shared definitions for the CoxingCoachAI MVP."""
+"""Shared definitions for CoxingCoachAI."""
 
 from __future__ import annotations
 
@@ -30,4 +30,11 @@ PHASE_GUIDANCE: dict[str, str] = {
 }
 
 SUPPORTED_AUDIO_EXTENSIONS = {"mp3", "mp4", "mpeg", "mpga", "m4a", "wav", "webm"}
-MAX_API_AUDIO_MB = 25
+MAX_LOCAL_AUDIO_MB = 100
+
+LOCAL_WHISPER_MODELS: dict[str, str] = {
+    "Fastest / lowest memory (tiny.en)": "tiny.en",
+    "Balanced accuracy (base.en)": "base.en",
+    "Higher accuracy / slower (small.en)": "small.en",
+}
+DEFAULT_LOCAL_WHISPER_MODEL = "base.en"

@@ -1,107 +1,118 @@
-# CoxingCoachAI MVP
+# CoxingCoachAI — No-Key Streamlit Edition
 
-A Colab-first and Streamlit-ready MVP for an AI-based coxswain training website app.
+CoxingCoachAI is an off-water coxswain training MVP. Users can upload a race or practice recording, record a simulated race call in the browser, review the locally generated transcript, select feedback focus areas, inspect ideal-world simulated telemetry, and generate post-race coaching feedback.
 
-The app supports two core workflows:
+## Important change in this edition
 
-1. Upload a coxing recording such as `.m4a`, `.mp3`, `.wav`, `.webm`, `.mp4`, `.mpeg`, or `.mpga`.
-2. Record a simulated race session directly in the browser using Streamlit audio input.
+**Audio transcription no longer requires `OPENAI_API_KEY`.** The app uses Faster-Whisper locally on the Streamlit server with CPU INT8 inference.
 
-The MVP prioritizes accurate transcription, focus-area-specific feedback, and an ideal-world race simulator where calls like power 10s and rate shifts are reflected in the simulated telemetry.
+An OpenAI key is optional and is used only for enhanced LLM-written feedback. Without a key, the app automatically uses the included local coaching-rule engine.
 
-## MVP focus areas
+## Features
 
-Users can select any of the following focus areas before analysis:
+- Upload `.m4a`, `.mp3`, `.wav`, `.webm`, `.mp4`, `.mpeg`, or `.mpga` recordings.
+- Record a simulated race call with the browser microphone.
+- Local Faster-Whisper speech-to-text with rowing vocabulary prompting.
+- Timestamped transcription segments and an editable transcript.
+- User-selected feedback focus areas; blank selection produces general feedback.
+- Transcript metrics for filler rate, estimated calls, technical language, and detected commands.
+- Ideal-world telemetry simulation for power 10s, rate shifts, settles, and sprints.
+- Rule-based no-key feedback, with optional LLM feedback when a key is configured.
+- Included Google Colab notebook for local transcription and pipeline experimentation.
 
-- Communication clarity and economy of words
-- Tone and phase-appropriate intensity
-- Technical calls and rowing vocabulary
-- Rhythmic synchronization and call timing
-- Rate management and race rhythm
-- Tactical awareness and race plan execution
-- Psychological calibration and trust-building
-
-If no focus areas are selected, the app produces general feedback across all areas.
-
-## Recommended architecture
+## Repository structure
 
 ```text
-Streamlit UI
-  app.py
-    - recording upload or browser audio input
-    - focus-area selection
-    - scenario settings
-    - results dashboard
-
-Core package
-  coxing_ai/transcription.py
-    - speech-to-text adapter
-  coxing_ai/audio_features.py
-    - transcript-derived metrics and command detection
-  coxing_ai/simulator.py
-    - ideal-world race telemetry simulator
-  coxing_ai/feedback.py
-    - LLM feedback with rule-based fallback
-  coxing_ai/core.py
-    - focus-area definitions and shared constants
+.
+├── app.py
+├── requirements.txt
+├── README.md
+├── LICENSE
+├── .gitignore
+├── .streamlit/
+│   └── config.toml
+├── coxing_ai/
+│   ├── __init__.py
+│   ├── audio_features.py
+│   ├── core.py
+│   ├── feedback.py
+│   ├── simulator.py
+│   └── transcription.py
+├── notebooks/
+│   └── CoxingCoachAI_Local_Whisper.ipynb
+└── sample_data/
+    └── sample_transcript.txt
 ```
 
-## Local setup
+## Run locally
+
+Use Python 3.11 or 3.12.
 
 ```bash
 python -m venv .venv
+```
+
+Windows PowerShell:
+
+```powershell
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+streamlit run app.py
+```
+
+macOS/Linux:
+
+```bash
 source .venv/bin/activate
 pip install -r requirements.txt
 streamlit run app.py
 ```
 
-On Windows PowerShell:
+The first transcription downloads the selected Whisper model. Subsequent transcriptions reuse the cached model while the app process remains active.
 
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-streamlit run app.py
-```
+## Deploy on Streamlit Community Cloud
 
-## API key setup
+1. Extract this zip file.
+2. Create a new GitHub repository.
+3. Upload **the contents of the extracted folder** so that `app.py` and `requirements.txt` are at the repository root.
+4. Commit the files to the `main` branch.
+5. In Streamlit Community Cloud, create a new app from the repository.
+6. Set the entrypoint to `app.py`.
+7. In Advanced settings, select **Python 3.11** or **Python 3.12**.
+8. No secrets are needed for transcription.
+9. Deploy.
 
-The app can run in demo/rule-based mode without an API key, but transcription requires a speech-to-text provider.
+## Model selection
 
-For local development, create `.streamlit/secrets.toml` from the included template:
+The sidebar offers:
+
+- `tiny.en`: fastest and lowest memory.
+- `base.en`: recommended balance and default.
+- `small.en`: better accuracy but slower and more resource intensive.
+
+On free Streamlit hosting, begin with `base.en` and short recordings. If the app is slow or reaches resource limits, switch to `tiny.en`.
+
+## Optional enhanced feedback
+
+To enable LLM-written feedback, add this in Streamlit Advanced settings → Secrets:
 
 ```toml
 [openai]
-api_key = "sk-your-key-here"
-transcription_model = "gpt-4o-mini-transcribe"
-feedback_model = "gpt-4o-mini"
+api_key = "your-key"
 ```
 
-Do not commit `.streamlit/secrets.toml` to GitHub.
+This is optional. Do not commit `.streamlit/secrets.toml` to GitHub.
 
-## Streamlit Community Cloud deployment
+## Privacy and safety
 
-1. Push this repository to GitHub.
-2. In Streamlit Community Cloud, create a new app from the GitHub repository.
-3. Set the entrypoint file to `app.py`.
-4. Select the same Python version used during development.
-5. Add the contents of `.streamlit/secrets.toml` through Streamlit Advanced settings, not in the repo.
-6. Deploy.
+- Uploaded recordings are written only to a temporary file for transcription and are deleted afterward.
+- This starter app does not include permanent recording storage or user accounts.
+- Inform users how recordings are processed before adding data persistence.
+- The simulator is idealized; it is not a safety, navigation, or on-water steering system.
 
-## Colab workflow
+## Current limitations
 
-Open `notebooks/CoxingCoachAI_MVP.ipynb` in Google Colab to test the core pipeline and export app files.
-
-## Safety and privacy notes
-
-- Treat uploaded audio as sensitive user data.
-- Do not store recordings unless you explicitly add storage and user consent.
-- Keep API keys in Streamlit secrets or environment variables.
-- The MVP uses transcript-only feedback. Future versions can add deeper audio timing, cadence, 2D/3D animation, and oarlock/water sound synchronization.
-
-## Known MVP limitations
-
-- Browser recording through Streamlit produces a single audio clip, not a low-latency multiplayer game.
-- The simulator is idealized and transcript-command-based; it does not yet model crew fatigue, weather, or imperfect execution.
-- Without exact audio timestamps, call timing is estimated from transcript structure rather than measured against catch/finish sounds.
-- Free hosting is not appropriate for large local AI models; use API-based transcription/feedback or a paid backend for heavier workloads.
+- Free Streamlit hosting uses CPU, so long audio may take several minutes to transcribe.
+- The first transcription downloads the model and is slower than later requests.
+- Call timing is inferred from transcription segments; the app does not yet detect catches, finishes, or oarlock sounds directly.
+- Tactical steering and line analysis require future video/computer-vision features.

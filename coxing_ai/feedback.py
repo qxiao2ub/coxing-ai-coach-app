@@ -186,6 +186,17 @@ def generate_feedback(
     api_key: str | None = None,
     transcription_confidence_note: str | None = None,
 ) -> str:
+    # The repository is fully usable without an API key. In no-key mode, use the
+    # transparent local rules instead of treating the missing key as an error.
+    if not (api_key or _get_openai_key()):
+        feedback = generate_rule_based_feedback(
+            transcript, selected_focus, scenario, telemetry_summary
+        )
+        feedback += "\n\n---\n*Local no-key coaching mode was used.*"
+        if transcription_confidence_note:
+            feedback += f"\n\n> Transcription note: {transcription_confidence_note}"
+        return feedback
+
     try:
         feedback = generate_llm_feedback(
             transcript=transcript,
@@ -198,5 +209,10 @@ def generate_feedback(
             feedback += f"\n\n> Transcription note: {transcription_confidence_note}"
         return feedback
     except Exception as exc:
-        fallback = generate_rule_based_feedback(transcript, selected_focus, scenario, telemetry_summary)
-        return fallback + f"\n\n---\nRule-based fallback used because LLM feedback was unavailable: `{exc}`"
+        fallback = generate_rule_based_feedback(
+            transcript, selected_focus, scenario, telemetry_summary
+        )
+        return fallback + (
+            "\n\n---\nThe optional LLM feedback service was unavailable, so local "
+            f"coaching rules were used instead. Technical detail: `{exc}`"
+        )
