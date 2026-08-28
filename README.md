@@ -1,6 +1,14 @@
 # CoxingCoachAI — No-Key Streamlit Edition
 
+**Author:** Julia Hu  
+**Advisor:** Dr. Qingyang Xiao
+
 CoxingCoachAI is an off-water coxswain training MVP. Users can upload a race or practice recording, record a simulated race call in the browser, review the locally generated transcript, select feedback focus areas, inspect ideal-world simulated telemetry, and generate post-race coaching feedback.
+
+## Project team
+
+- **Author:** Julia Hu
+- **Advisor:** Dr. Qingyang Xiao
 
 ## Important change in this edition
 

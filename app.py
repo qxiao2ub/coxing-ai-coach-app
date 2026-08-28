@@ -26,7 +26,7 @@ from coxing_ai.transcription import (
 )
 
 st.set_page_config(
-    page_title="CoxingCoachAI",
+    page_title="CoxingCoachAI | Julia Hu",
     page_icon="🚣",
     layout="wide",
 )
@@ -240,6 +240,14 @@ def main() -> None:
         "Off-water coxswain practice with local AI transcription, focus-area feedback, "
         "and ideal-world race simulation."
     )
+    st.markdown(
+        "**Author:** Julia Hu &nbsp;&nbsp;|&nbsp;&nbsp; **Advisor:** Dr. Qingyang Xiao"
+    )
+
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("Project team")
+    st.sidebar.markdown("**Author:** Julia Hu")
+    st.sidebar.markdown("**Advisor:** Dr. Qingyang Xiao")
 
     scenario = scenario_form()
     selected_focus = focus_selector()
@@ -329,6 +337,9 @@ def main() -> None:
         sample = Path("sample_data/sample_transcript.txt")
         demo_text = sample.read_text(encoding="utf-8") if sample.exists() else ""
         analyze_transcript(demo_text, selected_focus, scenario, api_key, "demo")
+
+    st.divider()
+    st.caption("CoxingCoachAI · Author: Julia Hu · Advisor: Dr. Qingyang Xiao")
 
     with st.expander("Current scope and future upgrades"):
         st.markdown(

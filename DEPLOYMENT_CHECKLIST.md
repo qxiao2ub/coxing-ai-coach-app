@@ -9,6 +9,7 @@
 - [ ] Select Python 3.11 or 3.12 in Advanced settings.
 - [ ] Leave Secrets blank unless optional LLM feedback is desired.
 - [ ] Deploy and wait for dependencies to install.
+- [ ] Confirm the app displays **Author: Julia Hu** and **Advisor: Dr. Qingyang Xiao**.
 - [ ] First test the Demo transcript tab.
 - [ ] Next test a 15–30 second `.m4a` clip with `base.en`.
 - [ ] If resource use is high, choose `tiny.en` in the sidebar.
