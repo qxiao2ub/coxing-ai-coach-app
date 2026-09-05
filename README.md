@@ -1,4 +1,4 @@
-# GLIDE — CoxingCoachAI
+# CoxingCoachAI
 
 **AI-powered off-water coxswain training** with a Streamlit interface migrated from the supplied GLIDE / Deep Frost Command UI design.
 
