@@ -1,46 +1,102 @@
-# CoxingCoachAI — No-Key Streamlit Edition
+# GLIDE — CoxingCoachAI
+
+**AI-powered off-water coxswain training** with a Streamlit interface migrated from the supplied GLIDE / Deep Frost Command UI design.
 
 **Author:** Julia Hu  
 **Advisor:** Dr. Qingyang Xiao
 
-CoxingCoachAI is an off-water coxswain training MVP. Users can upload a race or practice recording, record a simulated race call in the browser, review the locally generated transcript, select feedback focus areas, inspect ideal-world simulated telemetry, and generate post-race coaching feedback.
+Live-app target: https://coxing-ai-coach.streamlit.app/  
+GitHub repository: https://github.com/qxiao2ub/coxing-ai-coach-app
 
-## Project team
+## What this version includes
 
-- **Author:** Julia Hu
-- **Advisor:** Dr. Qingyang Xiao
+- GLIDE dark, glassmorphism-inspired rowing interface migrated to Streamlit.
+- Local Faster-Whisper transcription for `.m4a`, `.wav`, `.mp3`, `.webm`, `.mp4`, `.mpeg`, and `.mpga` recordings.
+- No `OPENAI_API_KEY` required for transcription or the built-in coaching mode.
+- Browser microphone recording with `st.audio_input`.
+- Editable transcript review before coaching analysis.
+- User-selected focus areas; leaving the list blank produces general feedback.
+- Transcript metrics and rowing-command detection.
+- Ideal-world race simulator for power 10s, rate shifts, settles, and sprints.
+- Stroke-rate and split telemetry charts.
+- Optional OpenAI-powered narrative feedback if an API key is later configured.
+- Author and advisor credits in the app and repository.
 
-## Important change in this edition
+## Streamlit deployment
 
-**Audio transcription no longer requires `OPENAI_API_KEY`.** The app uses Faster-Whisper locally on the Streamlit server with CPU INT8 inference.
+1. Extract this ZIP.
+2. Upload the **contents of this folder** to the root of `qxiao2ub/coxing-ai-coach-app`.
+3. Confirm the repository root contains `app.py`, `requirements.txt`, `.streamlit/`, `coxing_ai/`, and `assets/`.
+4. In Streamlit Community Cloud, choose the repository and set the app entrypoint to `app.py`.
+5. No Streamlit secret is required for local transcription or local feedback.
+6. The first transcription may take longer because the selected Faster-Whisper model must be downloaded into the running environment.
 
-An OpenAI key is optional and is used only for enhanced LLM-written feedback. Without a key, the app automatically uses the included local coaching-rule engine.
+## Architecture
 
-## Features
+```text
+Browser / Streamlit UI
+        |
+        +--> Uploaded audio or browser recording
+        |         |
+        |         +--> Local Faster-Whisper speech-to-text
+        |                    |
+        |                    +--> Editable transcript
+        |                              |
+        +------------------------------+
+                                       |
+                               Transcript metrics
+                                       |
+                               Coxing event detector
+                                       |
+                               Ideal-world simulator
+                               /                 \
+                    Stroke-rate telemetry     Split telemetry
+                               \                 /
+                                Focus-constrained
+                                post-race feedback
+```
 
-- Upload `.m4a`, `.mp3`, `.wav`, `.webm`, `.mp4`, `.mpeg`, or `.mpga` recordings.
-- Record a simulated race call with the browser microphone.
-- Local Faster-Whisper speech-to-text with rowing vocabulary prompting.
-- Timestamped transcription segments and an editable transcript.
-- User-selected feedback focus areas; blank selection produces general feedback.
-- Transcript metrics for filler rate, estimated calls, technical language, and detected commands.
-- Ideal-world telemetry simulation for power 10s, rate shifts, settles, and sprints.
-- Rule-based no-key feedback, with optional LLM feedback when a key is configured.
-- Included Google Colab notebook for local transcription and pipeline experimentation.
+## Local run
 
-## Repository structure
+```bash
+python -m venv .venv
+# Windows: .venv\Scripts\activate
+# macOS/Linux: source .venv/bin/activate
+pip install -r requirements.txt
+streamlit run app.py
+```
+
+## Optional enhanced feedback
+
+The app works without an API key. If you later want the optional LLM narrative feedback path, add this to Streamlit Secrets:
+
+```toml
+[openai]
+api_key = "YOUR_KEY_HERE"
+```
+
+Never commit a real key to GitHub.
+
+## UI migration notes
+
+The supplied TypeScript/Tailwind concept used a **Deep Frost Command** palette, glass cards, cyan/ice accents, a coach panel, outing summary, recent-session cards, and live-rate visualization. These elements were reimplemented using Streamlit-native widgets plus custom CSS so the deployed app keeps its Python/Streamlit architecture while closely following the supplied UI.
+
+A compact copy of the supplied reference source is kept under `ui_reference/` for design traceability. The runtime Streamlit app does **not** depend on Node, Bun, Vite, or React.
+
+## Repository layout
 
 ```text
 .
 ├── app.py
 ├── requirements.txt
 ├── README.md
-├── LICENSE
-├── .gitignore
+├── DEPLOYMENT_CHECKLIST.md
+├── UI_MIGRATION_NOTES.md
 ├── .streamlit/
 │   └── config.toml
+├── assets/
+│   └── rowing-lake.jpg
 ├── coxing_ai/
-│   ├── __init__.py
 │   ├── audio_features.py
 │   ├── core.py
 │   ├── feedback.py
@@ -48,79 +104,14 @@ An OpenAI key is optional and is used only for enhanced LLM-written feedback. Wi
 │   └── transcription.py
 ├── notebooks/
 │   └── CoxingCoachAI_Local_Whisper.ipynb
-└── sample_data/
-    └── sample_transcript.txt
+├── sample_data/
+│   └── sample_transcript.txt
+└── ui_reference/
+    ├── index.tsx
+    ├── styles.css
+    └── README_original_ui.md
 ```
 
-## Run locally
+## Important MVP behavior
 
-Use Python 3.11 or 3.12.
-
-```bash
-python -m venv .venv
-```
-
-Windows PowerShell:
-
-```powershell
-.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-streamlit run app.py
-```
-
-macOS/Linux:
-
-```bash
-source .venv/bin/activate
-pip install -r requirements.txt
-streamlit run app.py
-```
-
-The first transcription downloads the selected Whisper model. Subsequent transcriptions reuse the cached model while the app process remains active.
-
-## Deploy on Streamlit Community Cloud
-
-1. Extract this zip file.
-2. Create a new GitHub repository.
-3. Upload **the contents of the extracted folder** so that `app.py` and `requirements.txt` are at the repository root.
-4. Commit the files to the `main` branch.
-5. In Streamlit Community Cloud, create a new app from the repository.
-6. Set the entrypoint to `app.py`.
-7. In Advanced settings, select **Python 3.11** or **Python 3.12**.
-8. No secrets are needed for transcription.
-9. Deploy.
-
-## Model selection
-
-The sidebar offers:
-
-- `tiny.en`: fastest and lowest memory.
-- `base.en`: recommended balance and default.
-- `small.en`: better accuracy but slower and more resource intensive.
-
-On free Streamlit hosting, begin with `base.en` and short recordings. If the app is slow or reaches resource limits, switch to `tiny.en`.
-
-## Optional enhanced feedback
-
-To enable LLM-written feedback, add this in Streamlit Advanced settings → Secrets:
-
-```toml
-[openai]
-api_key = "your-key"
-```
-
-This is optional. Do not commit `.streamlit/secrets.toml` to GitHub.
-
-## Privacy and safety
-
-- Uploaded recordings are written only to a temporary file for transcription and are deleted afterward.
-- This starter app does not include permanent recording storage or user accounts.
-- Inform users how recordings are processed before adding data persistence.
-- The simulator is idealized; it is not a safety, navigation, or on-water steering system.
-
-## Current limitations
-
-- Free Streamlit hosting uses CPU, so long audio may take several minutes to transcribe.
-- The first transcription downloads the model and is slower than later requests.
-- Call timing is inferred from transcription segments; the app does not yet detect catches, finishes, or oarlock sounds directly.
-- Tactical steering and line analysis require future video/computer-vision features.
+The simulator intentionally uses the project's ideal-world assumption: performance changes are simulated from recognized calls rather than inferred from real boat sensors. Future versions can replace these assumptions with telemetry, acoustic event detection, video analysis, or connected CoxBox data.

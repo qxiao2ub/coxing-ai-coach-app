@@ -1,15 +1,15 @@
-# Streamlit Deployment Checklist
+# Streamlit Deployment Checklist — GLIDE / CoxingCoachAI
 
-- [ ] Extract the zip.
-- [ ] Upload the extracted folder contents to the root of a GitHub repository.
-- [ ] Confirm `app.py`, `requirements.txt`, and `.streamlit/config.toml` are committed.
-- [ ] Create a Streamlit Community Cloud app.
-- [ ] Select the GitHub repository and `main` branch.
-- [ ] Set the entrypoint file to `app.py`.
-- [ ] Select Python 3.11 or 3.12 in Advanced settings.
-- [ ] Leave Secrets blank unless optional LLM feedback is desired.
-- [ ] Deploy and wait for dependencies to install.
-- [ ] Confirm the app displays **Author: Julia Hu** and **Advisor: Dr. Qingyang Xiao**.
-- [ ] First test the Demo transcript tab.
-- [ ] Next test a 15–30 second `.m4a` clip with `base.en`.
-- [ ] If resource use is high, choose `tiny.en` in the sidebar.
+**Author:** Julia Hu  
+**Advisor:** Dr. Qingyang Xiao
+
+1. Extract the ZIP archive.
+2. Upload the contents of `CoxingCoachAI_GLIDE_UI_GitHub_Repo` to the repository root.
+3. Confirm `app.py` is at the root.
+4. Confirm `requirements.txt`, `coxing_ai/`, `assets/`, and `.streamlit/config.toml` are committed.
+5. In Streamlit Community Cloud, choose `app.py` as the entrypoint.
+6. No API key is required for Faster-Whisper transcription or local coaching feedback.
+7. Start with `tiny.en` if Community Cloud memory is tight; use `base.en` for the balanced default.
+8. The first local transcription can be slower while the Whisper model is downloaded.
+9. Do not commit real API keys. If optional LLM feedback is used, configure it in Streamlit Secrets.
+10. Test upload, browser recording, demo transcript, charts, and feedback after deployment.
