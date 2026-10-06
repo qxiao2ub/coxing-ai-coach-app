@@ -1,15 +1,45 @@
-# Streamlit Deployment Checklist — GLIDE / CoxingCoachAI
+# GLIDE CoxingCoachAI — Streamlit deployment checklist
 
-**Author:** Julia Hu  
-**Advisor:** Dr. Qingyang Xiao
+**Author:** Julia Hu
 
-1. Extract the ZIP archive.
-2. Upload the contents of `CoxingCoachAI_GLIDE_UI_GitHub_Repo` to the repository root.
-3. Confirm `app.py` is at the root.
-4. Confirm `requirements.txt`, `coxing_ai/`, `assets/`, and `.streamlit/config.toml` are committed.
-5. In Streamlit Community Cloud, choose `app.py` as the entrypoint.
-6. No API key is required for Faster-Whisper transcription or local coaching feedback.
-7. Start with `tiny.en` if Community Cloud memory is tight; use `base.en` for the balanced default.
-8. The first local transcription can be slower while the Whisper model is downloaded.
-9. Do not commit real API keys. If optional LLM feedback is used, configure it in Streamlit Secrets.
-10. Test upload, browser recording, demo transcript, charts, and feedback after deployment.
+## Repository
+
+- [ ] `app.py` is at repository root.
+- [ ] `requirements.txt` is at repository root.
+- [ ] `.streamlit/config.toml` is committed.
+- [ ] `assets/rowing-lake.jpg` is committed.
+- [ ] `data/visitor_count.json` is committed.
+- [ ] `coxing_ai/visitor_counter.py` is committed.
+- [ ] Do not commit `.streamlit/secrets.toml` or any token.
+
+## Streamlit Community Cloud
+
+- Repository: `qxiao2ub/coxing-ai-coach-app`
+- Branch: `main`
+- Main file: `app.py`
+- Recommended Python: 3.11 or 3.12
+
+## Persistent no-database visitor counter
+
+For a cumulative count that survives Streamlit container restarts:
+
+1. Create a fine-grained GitHub token limited to this repository.
+2. Give it **Contents: Read and write** permission.
+3. In Streamlit App settings → Secrets, add:
+
+```toml
+[github_counter]
+token = "github_pat_..."
+repo = "qxiao2ub/coxing-ai-coach-app"
+path = "data/visitor_count.json"
+branch = "usage-data"
+source_branch = "main"
+```
+
+The app creates/uses the separate `usage-data` branch so visitor increments do not modify the deployed `main` branch.
+
+If this secret is omitted, the app uses a local JSON fallback. That is convenient for testing but cannot be guaranteed to survive an ephemeral Streamlit server replacement.
+
+## Audio transcription
+
+No OpenAI API key is required. The first local transcription may download the selected Faster-Whisper model and can therefore take longer.

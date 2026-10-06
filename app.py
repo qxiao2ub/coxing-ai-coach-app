@@ -26,9 +26,10 @@ from coxing_ai.transcription import (
     load_local_whisper_model,
     transcribe_audio_file,
 )
+from coxing_ai.visitor_counter import CounterConfig, CounterResult, increment_visitor_counter
 
 st.set_page_config(
-    page_title="GLIDE | AI Coxing Coach | Julia Hu",
+    page_title="GLIDE — AI Coxing Coach | Julia Hu",
     page_icon="🚣",
     layout="wide",
     initial_sidebar_state="collapsed",
@@ -73,585 +74,376 @@ def format_split(seconds: float) -> str:
 
 
 def inject_glide_css() -> None:
+    lake_background = image_data_uri(LAKE_IMAGE)
+    background_rule = (
+        f'linear-gradient(rgba(247, 250, 255, 0.80), rgba(247, 250, 255, 0.90)), url("{lake_background}")'
+        if lake_background
+        else 'linear-gradient(155deg, #eef4fb 0%, #f8fbff 52%, #eaf2fb 100%)'
+    )
     st.markdown(
-        """
+        f"""
 <style>
-:root {
-  --glide-bg: #07323c;
-  --glide-bg-deep: #041f28;
-  --glide-frost: rgba(10, 72, 82, 0.66);
-  --glide-frost-strong: rgba(12, 82, 94, 0.82);
-  --glide-line: rgba(95, 208, 255, 0.20);
-  --glide-line-strong: rgba(95, 208, 255, 0.42);
-  --glide-ice: #5fd0ff;
-  --glide-ink: #f7f1e8;
-  --glide-muted: #9bc4c6;
-  --glide-green: #76e6c0;
-}
+:root {{
+  --glide-bg: #eef4fb;
+  --glide-frost: rgba(255, 255, 255, 0.72);
+  --glide-frost-strong: rgba(255, 255, 255, 0.88);
+  --glide-line: rgba(72, 112, 166, 0.20);
+  --glide-line-strong: rgba(62, 111, 186, 0.36);
+  --glide-ice: #3f72bf;
+  --glide-ice-deep: #2d5f9f;
+  --glide-ink: #243956;
+  --glide-muted: #6c7f96;
+  --glide-soft: #dbe8f6;
+  --glide-green: #2e9d7a;
+  --glide-shadow: rgba(49, 77, 111, 0.16);
+}}
 
-html, body, [class*="css"] {
+html, body, [class*="css"] {{
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-}
+}}
 
 .stApp,
-[data-testid="stAppViewContainer"] {
+[data-testid="stAppViewContainer"] {{
   color: var(--glide-ink);
-  background:
-    radial-gradient(80% 60% at 82% -8%, rgba(95, 208, 255, 0.18), transparent 55%),
-    radial-gradient(75% 55% at 6% 112%, rgba(44, 72, 103, 0.58), transparent 60%),
-    linear-gradient(155deg, #07323c 0%, #062c37 50%, #041f28 100%);
+  background-image: {background_rule};
+  background-size: cover;
+  background-position: center;
   background-attachment: fixed;
-}
+}}
 
-[data-testid="stHeader"] {
-  background: transparent;
-}
+[data-testid="stAppViewContainer"]::before {{
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(100% 75% at 82% -10%, rgba(73, 131, 212, 0.16), transparent 55%),
+    radial-gradient(90% 60% at 8% 112%, rgba(125, 170, 220, 0.14), transparent 60%);
+  z-index: 0;
+}}
 
-[data-testid="stToolbar"] {
-  opacity: 0.25;
-}
+[data-testid="stHeader"] {{ background: transparent; }}
+[data-testid="stToolbar"] {{ opacity: 0.22; }}
+section[data-testid="stSidebar"] {{ display: none; }}
 
-section[data-testid="stSidebar"] {
-  display: none;
-}
-
-.block-container {
+.block-container {{
+  position: relative;
+  z-index: 1;
   max-width: 1180px;
-  padding-top: 1.05rem;
+  padding-top: 1.0rem;
   padding-bottom: 2rem;
-}
+}}
 
-h1, h2, h3, h4 {
-  letter-spacing: -0.02em;
-}
+h1, h2, h3, h4 {{
+  color: var(--glide-ink) !important;
+  letter-spacing: -0.025em;
+}}
 
-p, label, .stMarkdown, [data-testid="stCaptionContainer"] {
-  color: var(--glide-ink);
-}
+p, label, .stMarkdown, [data-testid="stCaptionContainer"] {{ color: var(--glide-ink); }}
+[data-testid="stCaptionContainer"] p, .stCaption, small {{ color: var(--glide-muted) !important; }}
 
-[data-testid="stCaptionContainer"] p,
-.stCaption,
-small {
+a {{ color: var(--glide-ice-deep) !important; }}
+
+/* Native Streamlit surfaces */
+[data-testid="stVerticalBlockBorderWrapper"] {{
+  border-radius: 24px !important;
+  border: 1px solid var(--glide-line) !important;
+  background: rgba(255, 255, 255, 0.70) !important;
+  box-shadow: 0 18px 48px var(--glide-shadow), inset 0 1px 0 rgba(255,255,255,.92);
+  backdrop-filter: blur(18px);
+}}
+
+.stButton > button,
+[data-testid="stBaseButton-primary"] {{
+  border-radius: 12px !important;
+  border: 1px solid rgba(51, 98, 164, .25) !important;
+  min-height: 2.65rem;
+  font-weight: 700 !important;
+}}
+
+.stButton > button[kind="primary"],
+[data-testid="stBaseButton-primary"] {{
+  background: linear-gradient(135deg, #4b80c8, #3267ae) !important;
+  color: white !important;
+}}
+
+[data-baseweb="select"] > div,
+[data-testid="stTextArea"] textarea,
+[data-testid="stTextInput"] input,
+[data-testid="stFileUploaderDropzone"] {{
+  background: rgba(255,255,255,.70) !important;
+  border-color: var(--glide-line) !important;
+  color: var(--glide-ink) !important;
+  border-radius: 14px !important;
+}}
+
+[data-testid="stFileUploaderDropzone"] {{
+  background: linear-gradient(145deg, rgba(255,255,255,.78), rgba(232,241,252,.72)) !important;
+}}
+
+[data-baseweb="tab-list"] {{
+  gap: .25rem;
+  background: rgba(255,255,255,.55);
+  border: 1px solid var(--glide-line);
+  border-radius: 16px;
+  padding: .25rem;
+}}
+
+[data-baseweb="tab"] {{
+  border-radius: 12px;
   color: var(--glide-muted) !important;
-}
+}}
 
-.glide-header {
+[aria-selected="true"][data-baseweb="tab"] {{
+  background: rgba(63,114,191,.12) !important;
+  color: var(--glide-ice-deep) !important;
+}}
+
+[data-testid="stMetric"] {{
+  background: rgba(255,255,255,.66);
+  border: 1px solid var(--glide-line);
+  border-radius: 16px;
+  padding: .7rem .8rem;
+}}
+
+/* Header closely mirrors the supplied Morning Lake GLIDE UI. */
+.glide-header {{
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  padding: 10px 2px 20px 2px;
-}
+  padding: 8px 2px 18px 2px;
+  animation: glide-rise .6s cubic-bezier(.22,.61,.36,1) both;
+}}
 
-.glide-brand {
-  display: flex;
-  align-items: center;
-  gap: 13px;
-  min-width: 270px;
-}
-
-.glide-logo {
-  width: 42px;
-  height: 42px;
-  display: grid;
-  place-items: center;
-  border-radius: 14px;
-  background: linear-gradient(145deg, rgba(14, 86, 98, 0.95), rgba(7, 50, 60, 0.95));
-  border: 1px solid var(--glide-line);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 12px 28px rgba(0,0,0,.20);
-  color: var(--glide-ice);
-  font-size: 21px;
-  font-weight: 800;
-}
-
-.glide-brand-name {
-  font-size: 24px;
-  font-weight: 800;
-  letter-spacing: .08em;
-  line-height: 1;
-}
-
-.glide-kicker,
-.glide-nav,
-.glide-status,
-.glide-eyebrow,
-.glide-mini-label,
-.glide-footer {
+.glide-brand {{ display: flex; align-items: center; gap: 12px; min-width: 250px; }}
+.glide-logo {{
+  width: 38px; height: 38px; display: grid; place-items: center;
+  border-radius: 13px; background: rgba(255,255,255,.82);
+  border: 1px solid var(--glide-line); color: var(--glide-ice);
+  box-shadow: 0 10px 24px rgba(45,79,118,.12), inset 0 1px 0 #fff;
+  font-size: 20px; font-weight: 900;
+}}
+.glide-brand-name {{ font-size: 23px; font-weight: 900; letter-spacing: .08em; line-height: 1; }}
+.glide-kicker, .glide-nav, .glide-status, .glide-mini-label, .glide-footer, .glide-reviewed, .glide-rate-label {{
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  text-transform: uppercase;
-  letter-spacing: .16em;
-}
-
-.glide-kicker {
-  margin-top: 5px;
-  font-size: 10px;
-  color: var(--glide-muted);
-}
-
-.glide-nav {
-  display: flex;
-  gap: 24px;
-  font-size: 10px;
-  color: var(--glide-muted);
-  white-space: nowrap;
-}
-
-.glide-nav span:first-child {
-  color: var(--glide-ice);
-}
-
-.glide-status {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  font-size: 10px;
-  color: var(--glide-muted);
-  white-space: nowrap;
-}
-
-.glide-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: var(--glide-ice);
-  box-shadow: 0 0 0 5px rgba(95,208,255,.08), 0 0 22px rgba(95,208,255,.55);
+  text-transform: uppercase; letter-spacing: .15em;
+}}
+.glide-kicker {{ margin-top: 5px; font-size: 9px; color: var(--glide-muted); }}
+.glide-nav {{ display:flex; gap:24px; font-size:10px; color:var(--glide-muted); white-space:nowrap; }}
+.glide-nav span:first-child {{ color: var(--glide-ice-deep); font-weight: 800; }}
+.glide-status {{ display:flex; align-items:center; gap:8px; font-size:9px; color:var(--glide-muted); white-space:nowrap; }}
+.glide-dot {{
+  width:8px; height:8px; border-radius:999px; background:var(--glide-ice);
+  box-shadow:0 0 0 5px rgba(63,114,191,.08), 0 0 18px rgba(63,114,191,.32);
   animation: glide-breathe 1.8s ease-in-out infinite;
-}
+}}
 
-@keyframes glide-breathe {
-  0%,100% { opacity:.55; transform:scale(1); }
-  50% { opacity:1; transform:scale(1.15); }
-}
+.glide-visitor-pill {{
+  display:inline-flex; align-items:center; gap:7px; padding:8px 11px;
+  border-radius:999px; background:rgba(255,255,255,.76);
+  border:1px solid var(--glide-line); color:var(--glide-ice-deep);
+  font-size:10px; font-weight:800; box-shadow:0 8px 22px rgba(45,79,118,.10);
+}}
 
-@keyframes glide-rise {
-  from { opacity:0; transform:translateY(12px); }
-  to { opacity:1; transform:none; }
-}
+.glide-visitor-fixed {{
+  position: fixed; right: 18px; bottom: 18px; z-index: 9999;
+  display:flex; align-items:center; gap:8px; padding:10px 14px;
+  border-radius:999px; background:rgba(255,255,255,.90);
+  border:1px solid var(--glide-line-strong); color:var(--glide-ink);
+  box-shadow:0 12px 30px rgba(45,79,118,.18); backdrop-filter:blur(14px);
+  font-size:11px; font-weight:800;
+}}
+.glide-visitor-fixed .count {{ color:var(--glide-ice-deep); font-size:13px; }}
 
-.glide-card {
-  position: relative;
-  overflow: hidden;
-  border-radius: 26px;
-  border: 1px solid var(--glide-line);
-  background: linear-gradient(145deg, rgba(11, 76, 87, .66), rgba(7, 48, 59, .56));
-  box-shadow: 0 22px 60px rgba(0,0,0,.20), inset 0 1px 0 rgba(255,255,255,.045);
-  backdrop-filter: blur(18px);
-  animation: glide-rise .65s cubic-bezier(.22,.61,.36,1) both;
-}
-
-.glide-card::before {
-  content:"";
-  position:absolute;
-  top:0; left:0; right:0;
-  height:1px;
-  background:linear-gradient(90deg, transparent, rgba(95,208,255,.72), transparent);
-}
-
-.glide-card-pad {
-  padding: 22px;
-}
-
-.glide-coach-head {
-  display:flex;
-  gap:12px;
-  align-items:center;
-}
-
-.glide-avatar {
-  width:42px;
-  height:42px;
-  display:grid;
-  place-items:center;
-  border-radius:999px;
-  background:rgba(95,208,255,.12);
-  border:1px solid rgba(95,208,255,.28);
-  color:var(--glide-ice);
-  font-weight:800;
-  font-size:18px;
-}
-
-.glide-title {
-  font-size:16px;
-  font-weight:750;
-  line-height:1.1;
-}
-
-.glide-eyebrow {
-  margin-top:4px;
-  font-size:9px;
-  color:var(--glide-ice);
-}
-
-.glide-time {
-  margin-left:auto;
-  font-family:"SFMono-Regular", Consolas, monospace;
-  color:var(--glide-muted);
-  font-size:9px;
-  text-transform:uppercase;
-  letter-spacing:.13em;
-}
-
-.glide-chat {
-  margin-top:18px;
-  display:grid;
-  gap:11px;
-}
-
-.glide-bubble {
-  max-width:92%;
-  padding:12px 14px;
-  border-radius:17px;
-  font-size:13px;
-  line-height:1.58;
-  color:rgba(247,241,232,.92);
-}
-
-.glide-bubble.user {
-  margin-left:auto;
-  max-width:84%;
-  background:rgba(95,208,255,.10);
-  border-bottom-right-radius:5px;
-}
-
-.glide-bubble.coach {
-  background:rgba(47, 112, 119, .25);
-  border-bottom-left-radius:5px;
-}
-
-.glide-accent { color:var(--glide-ice); font-weight:700; }
-
-.glide-listening {
-  margin-top:17px;
-  padding:12px 14px;
-  border-radius:16px;
+.glide-card, .glide-side-card, .glide-quick-card {{
+  position:relative; overflow:hidden; border-radius:24px;
   border:1px solid var(--glide-line);
-  background:rgba(3,31,39,.36);
-  font-family:"SFMono-Regular", Consolas, monospace;
-  font-size:10px;
-  text-transform:uppercase;
-  letter-spacing:.13em;
-  color:var(--glide-muted);
-}
+  background:linear-gradient(145deg, rgba(255,255,255,.78), rgba(244,249,255,.66));
+  box-shadow:0 20px 52px var(--glide-shadow), inset 0 1px 0 rgba(255,255,255,.92);
+  backdrop-filter:blur(18px); animation:glide-rise .65s cubic-bezier(.22,.61,.36,1) both;
+}}
+.glide-card::before, .glide-side-card::before, .glide-quick-card::before {{
+  content:""; position:absolute; top:0; left:0; right:0; height:1px;
+  background:linear-gradient(90deg, transparent, rgba(63,114,191,.42), transparent);
+}}
+.glide-card-pad {{ padding: 22px; }}
+.glide-side-card {{ padding:18px; margin-bottom:14px; }}
 
-.glide-chip-row {
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-  margin-top:13px;
-}
+.glide-quick-card {{ padding: 20px 21px; }}
+.glide-quick-top {{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; }}
+.glide-upload-cta {{
+  display:inline-flex; align-items:center; gap:8px; border-radius:12px;
+  padding:10px 14px; background:linear-gradient(135deg,#4b80c8,#3267ae);
+  color:#fff; font-weight:800; font-size:13px; box-shadow:0 10px 24px rgba(51,103,174,.22);
+}}
+.glide-quick-tag {{
+  font-family:monospace; text-transform:uppercase; letter-spacing:.13em;
+  color:var(--glide-muted); font-size:9px;
+}}
+.glide-quick-title {{ margin-top:16px; font-size:25px; font-weight:900; line-height:1.08; }}
+.glide-quick-copy {{ margin-top:8px; color:var(--glide-muted); font-size:13px; line-height:1.58; }}
+.glide-chip-row {{ display:flex; flex-wrap:wrap; gap:7px; margin-top:14px; }}
+.glide-chip {{
+  padding:7px 10px; border-radius:999px; background:rgba(63,114,191,.08);
+  border:1px solid rgba(63,114,191,.13); color:var(--glide-ice-deep); font-size:10px; font-weight:700;
+}}
 
-.glide-chip {
-  padding:7px 11px;
-  border-radius:999px;
-  background:rgba(54,119,127,.24);
-  border:1px solid rgba(95,208,255,.09);
-  color:rgba(247,241,232,.82);
-  font-size:11px;
-}
-
-.glide-section-head {
-  display:flex;
-  align-items:flex-end;
-  justify-content:space-between;
-  gap:15px;
-  margin-bottom:14px;
-}
-
-.glide-section-head h2 {
-  margin:3px 0 0 0;
-  font-size:28px;
-  line-height:1;
-  color:var(--glide-ink);
-}
-
-.glide-mini-label {
-  font-size:9px;
-  color:var(--glide-muted);
-}
-
-.glide-reviewed {
-  color:var(--glide-ice);
-  font-family:"SFMono-Regular", Consolas, monospace;
-  text-transform:uppercase;
-  letter-spacing:.12em;
-  font-size:9px;
-}
-
-.glide-stat-grid {
-  display:grid;
-  grid-template-columns:repeat(3, 1fr);
-  gap:10px;
-}
-
-.glide-stat {
-  padding:12px;
-  border-radius:14px;
-  background:rgba(3,31,39,.32);
+.glide-section-head {{ display:flex; align-items:flex-end; justify-content:space-between; gap:14px; margin-bottom:13px; }}
+.glide-section-head h2 {{ margin:4px 0 0; font-size:27px; line-height:1.05; }}
+.glide-mini-label {{ font-size:9px; color:var(--glide-muted); }}
+.glide-reviewed {{ font-size:9px; color:var(--glide-ice-deep); font-weight:800; }}
+.glide-stat-grid {{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }}
+.glide-stat {{
+  padding:12px; border-radius:14px; background:rgba(244,249,255,.70);
   border:1px solid var(--glide-line);
-}
+}}
+.glide-stat .value {{ margin-top:5px; font-size:23px; font-weight:900; color:var(--glide-ink); }}
+.glide-stat .unit {{ font-size:10px; color:var(--glide-muted); font-weight:700; }}
+.glide-lake {{ width:100%; height:220px; object-fit:cover; margin-top:14px; border-radius:17px; display:block; }}
 
-.glide-stat .value {
-  margin-top:4px;
-  font-size:24px;
-  font-weight:780;
-}
+.glide-session-row {{
+  display:flex; align-items:center; gap:10px; padding:10px; margin-top:8px;
+  border-radius:15px; background:rgba(244,249,255,.70); border:1px solid var(--glide-line);
+}}
+.glide-session-icon {{
+  width:38px; height:38px; display:grid; place-items:center; border-radius:12px;
+  background:rgba(63,114,191,.10); color:var(--glide-ice-deep); font-weight:900;
+}}
+.glide-session-title {{ font-size:12px; font-weight:800; }}
+.glide-session-meta {{ margin-top:2px; color:var(--glide-muted); font-size:9px; font-family:monospace; text-transform:uppercase; letter-spacing:.08em; }}
+.glide-arrow {{ margin-left:auto; color:var(--glide-muted); }}
 
-.glide-stat .unit {
-  color:var(--glide-muted);
-  font-size:11px;
-  font-weight:500;
-}
+.glide-live {{ display:flex; align-items:flex-end; gap:18px; margin-top:12px; min-height:96px; }}
+.glide-bars {{ height:88px; display:flex; align-items:flex-end; gap:6px; min-width:125px; }}
+.glide-bar {{ width:10px; border-radius:999px; background:rgba(93,124,160,.26); }}
+.glide-bar.hot {{ background:var(--glide-ice); box-shadow:0 0 16px rgba(63,114,191,.22); }}
+.glide-rate {{ font-size:40px; line-height:.9; font-weight:900; text-align:right; }}
+.glide-rate-label {{ margin-top:5px; color:var(--glide-ice-deep); font-size:9px; text-align:right; }}
 
-.glide-lake {
-  width:100%;
-  height:215px;
-  object-fit:cover;
-  margin-top:13px;
-  border-radius:17px;
-  border:1px solid rgba(255,255,255,.05);
-  filter:saturate(.84) contrast(1.03) brightness(.88);
-}
+.glide-console-title {{ margin:34px 0 14px; }}
+.glide-console-title h2 {{ margin:4px 0 6px; font-size:29px; }}
+.glide-console-title p {{ color:var(--glide-muted); margin:0; max-width:760px; font-size:13px; }}
+.glide-tab-visits {{
+  margin: 4px 0 14px; padding: 8px 11px; border-radius: 12px;
+  background: rgba(63,114,191,.07); border:1px solid rgba(63,114,191,.12);
+  color:var(--glide-muted); font-size:10px; font-family:monospace; text-transform:uppercase; letter-spacing:.08em;
+}}
+.glide-tab-visits strong {{ color:var(--glide-ice-deep); }}
 
-.glide-side-card {
-  padding:18px;
-  border-radius:24px;
-  border:1px solid var(--glide-line);
-  background:rgba(9,70,80,.55);
-  box-shadow:0 18px 45px rgba(0,0,0,.18);
-  margin-bottom:14px;
-}
+.glide-footer {{
+  display:flex; flex-wrap:wrap; justify-content:space-between; gap:12px;
+  margin-top:20px; padding:20px 2px 4px; border-top:1px solid var(--glide-line);
+  color:var(--glide-muted); font-size:9px;
+}}
 
-.glide-session-row {
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:10px;
-  margin-top:8px;
-  border-radius:15px;
-  background:rgba(3,31,39,.32);
-  border:1px solid rgba(95,208,255,.11);
-}
+@keyframes glide-rise {{ from {{ opacity:0; transform:translateY(12px); }} to {{ opacity:1; transform:none; }} }}
+@keyframes glide-breathe {{ 0%,100% {{ opacity:.55; transform:scale(1); }} 50% {{ opacity:1; transform:scale(1.15); }} }}
 
-.glide-session-icon {
-  width:36px;
-  height:36px;
-  border-radius:12px;
-  display:grid;
-  place-items:center;
-  background:rgba(95,208,255,.10);
-  color:var(--glide-ice);
-  font-weight:800;
-}
-
-.glide-session-title { font-size:12px; font-weight:700; }
-.glide-session-meta { margin-top:2px; color:var(--glide-muted); font-size:9px; font-family:monospace; text-transform:uppercase; letter-spacing:.08em; }
-.glide-arrow { margin-left:auto; color:var(--glide-muted); }
-
-.glide-live {
-  display:flex;
-  align-items:flex-end;
-  justify-content:space-between;
-  min-height:105px;
-}
-
-.glide-bars {
-  height:80px;
-  display:flex;
-  gap:6px;
-  align-items:flex-end;
-}
-
-.glide-bar {
-  width:8px;
-  border-radius:999px;
-  background:rgba(80,150,156,.48);
-}
-
-.glide-bar.hot {
-  background:var(--glide-ice);
-  box-shadow:0 0 20px rgba(95,208,255,.38);
-}
-
-.glide-rate {
-  font-size:43px;
-  font-weight:850;
-  line-height:1;
-  text-align:right;
-}
-
-.glide-rate-label {
-  margin-top:4px;
-  color:var(--glide-ice);
-  font-family:monospace;
-  text-transform:uppercase;
-  letter-spacing:.12em;
-  font-size:9px;
-}
-
-/* Native Streamlit glass panels */
-div[data-testid="stVerticalBlockBorderWrapper"] {
-  background:linear-gradient(145deg, rgba(11,76,87,.66), rgba(7,48,59,.58));
-  border:1px solid var(--glide-line) !important;
-  border-radius:26px !important;
-  box-shadow:0 22px 60px rgba(0,0,0,.19), inset 0 1px 0 rgba(255,255,255,.04);
-  backdrop-filter:blur(18px);
-}
-
-[data-testid="stMetric"] {
-  background:rgba(3,31,39,.26);
-  border:1px solid rgba(95,208,255,.12);
-  border-radius:15px;
-  padding:12px 14px;
-}
-
-[data-testid="stMetricLabel"] { color:var(--glide-muted); }
-[data-testid="stMetricValue"] { color:var(--glide-ink); }
-
-.stButton > button,
-.stDownloadButton > button {
-  border-radius:14px !important;
-  border:1px solid rgba(95,208,255,.42) !important;
-  background:linear-gradient(135deg, #69dafd, #42bfe8) !important;
-  color:#04232b !important;
-  font-weight:800 !important;
-  box-shadow:0 10px 28px rgba(16,171,220,.17);
-}
-
-.stButton > button:hover,
-.stDownloadButton > button:hover {
-  border-color:#8ce5ff !important;
-  filter:brightness(1.05);
-}
-
-[data-baseweb="select"] > div,
-[data-baseweb="input"] > div,
-textarea,
-[data-testid="stFileUploaderDropzone"],
-[data-testid="stAudioInput"] {
-  background:rgba(3,31,39,.40) !important;
-  border-color:rgba(95,208,255,.18) !important;
-  border-radius:15px !important;
-  color:var(--glide-ink) !important;
-}
-
-[data-testid="stFileUploaderDropzone"] {
-  border-style:dashed !important;
-}
-
-[data-baseweb="tag"] {
-  background:rgba(95,208,255,.13) !important;
-  color:var(--glide-ink) !important;
-  border:1px solid rgba(95,208,255,.18) !important;
-}
-
-button[data-baseweb="tab"] {
-  color:var(--glide-muted) !important;
-  font-family:monospace !important;
-  text-transform:uppercase;
-  letter-spacing:.08em;
-}
-
-button[data-baseweb="tab"][aria-selected="true"] {
-  color:var(--glide-ice) !important;
-}
-
-[data-baseweb="tab-highlight"] {
-  background-color:var(--glide-ice) !important;
-}
-
-[data-testid="stExpander"] {
-  border:1px solid rgba(95,208,255,.13) !important;
-  border-radius:15px !important;
-  background:rgba(3,31,39,.20);
-}
-
-[data-testid="stAlert"] {
-  border-radius:16px;
-  border:1px solid rgba(95,208,255,.15);
-}
-
-hr {
-  border-color:rgba(95,208,255,.12) !important;
-}
-
-.glide-console-title {
-  margin:24px 0 8px 0;
-  padding:18px 20px;
-  border-radius:22px;
-  background:linear-gradient(90deg, rgba(95,208,255,.08), rgba(95,208,255,.02));
-  border:1px solid rgba(95,208,255,.13);
-}
-
-.glide-console-title h2 { margin:0; font-size:29px; }
-.glide-console-title p { margin:6px 0 0 0; color:var(--glide-muted); font-size:12px; }
-
-.glide-footer {
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:space-between;
-  gap:12px;
-  padding:20px 2px 4px;
-  margin-top:16px;
-  border-top:1px solid rgba(95,208,255,.12);
-  color:var(--glide-muted);
-  font-size:9px;
-}
-
-@media (max-width: 850px) {
-  .glide-nav { display:none; }
-  .glide-status { display:none; }
-  .glide-header { padding-bottom:12px; }
-  .glide-stat-grid { grid-template-columns:1fr; }
-  .glide-lake { height:170px; }
-}
+@media (max-width: 850px) {{
+  .glide-nav, .glide-status {{ display:none; }}
+  .glide-header {{ padding-bottom:12px; }}
+  .glide-stat-grid {{ grid-template-columns:1fr; }}
+  .glide-lake {{ height:170px; }}
+  .glide-visitor-fixed {{ right:10px; bottom:10px; }}
+}}
 </style>
         """,
         unsafe_allow_html=True,
     )
 
 
-def render_header() -> None:
+
+def get_counter_config() -> CounterConfig:
+    token = os.getenv("GITHUB_COUNTER_TOKEN")
+    repo = os.getenv("GITHUB_COUNTER_REPO", "qxiao2ub/coxing-ai-coach-app")
+    counter_path = os.getenv("GITHUB_COUNTER_PATH", "data/visitor_count.json")
+    branch = os.getenv("GITHUB_COUNTER_BRANCH", "usage-data")
+    source_branch = os.getenv("GITHUB_COUNTER_SOURCE_BRANCH", "main")
+    try:
+        section = st.secrets.get("github_counter", {})
+        token = section.get("token") or token
+        repo = section.get("repo") or repo
+        counter_path = section.get("path") or counter_path
+        branch = section.get("branch") or branch
+        source_branch = section.get("source_branch") or source_branch
+    except Exception:
+        pass
+    return CounterConfig(
+        repo=repo,
+        path=counter_path,
+        branch=branch,
+        source_branch=source_branch,
+        token=token,
+    )
+
+
+def get_session_visitor_count() -> CounterResult:
+    state_key = "_coxingcoach_visitor_counter"
+    if state_key not in st.session_state:
+        result = increment_visitor_counter(
+            get_counter_config(),
+            APP_ROOT / "data" / "visitor_count.json",
+        )
+        st.session_state[state_key] = {
+            "count": result.count,
+            "backend": result.backend,
+            "persistent": result.persistent,
+        }
+    cached = st.session_state[state_key]
+    return CounterResult(
+        count=int(cached["count"]),
+        backend=str(cached["backend"]),
+        persistent=bool(cached["persistent"]),
+    )
+
+
+def render_fixed_visitor_counter(visitor_count: int) -> None:
     st.markdown(
-        """
+        f'<div class="glide-visitor-fixed">👥 App visitors <span class="count">{visitor_count:,}</span></div>',
+        unsafe_allow_html=True,
+    )
+
+
+def render_tab_visitor_counter(visitor_count: int) -> None:
+    st.markdown(
+        f'<div class="glide-tab-visits">👥 Cumulative app visits · <strong>{visitor_count:,}</strong> &nbsp;·&nbsp; Author Julia Hu</div>',
+        unsafe_allow_html=True,
+    )
+
+def render_header(visitor_count: int) -> None:
+    st.markdown(
+        f"""
 <div class="glide-header">
   <div class="glide-brand">
     <div class="glide-logo">G</div>
     <div>
       <div class="glide-brand-name">GLIDE</div>
-      <div class="glide-kicker">CoxingCoachAI · Julia Hu · Advisor Dr. Qingyang Xiao</div>
+      <div class="glide-kicker">coxing coach · Author Julia Hu</div>
     </div>
   </div>
   <div class="glide-nav"><span>Console</span><span>Sessions</span><span>Calls</span><span>Progress</span></div>
-  <div class="glide-status"><span class="glide-dot"></span><span>On the water</span></div>
+  <div class="glide-status"><span class="glide-dot"></span><span>On the water</span><span class="glide-visitor-pill">👥 {visitor_count:,} visits</span></div>
 </div>
         """,
         unsafe_allow_html=True,
     )
 
 
-def render_coach_card() -> None:
+def render_upload_prompt_card(visitor_count: int) -> None:
     st.markdown(
-        """
-<div class="glide-card">
-  <div class="glide-card-pad">
-    <div class="glide-coach-head">
-      <div class="glide-avatar">A</div>
-      <div>
-        <div class="glide-title">Coach Anders</div>
-        <div class="glide-eyebrow">Ready · AI coxing coach</div>
-      </div>
-      <div class="glide-time">off-water lab</div>
-    </div>
-    <div class="glide-chat">
-      <div class="glide-bubble user">We're running flat water at the lake. Walk me through a calm start to 32.</div>
-      <div class="glide-bubble coach">Good. Set the body first — long and controlled to the catch. Count the build so the crew hears it: <span class="glide-accent">“Easy… easy… building at four.”</span> Then establish length before asking for more.</div>
-      <div class="glide-bubble coach">At race rhythm, use a deliberate <span class="glide-accent">“Breathe.”</span> between calls. Let the boat find its glide, then make the next instruction matter.</div>
-    </div>
-    <div class="glide-listening">● &nbsp; Local AI is ready for your recording</div>
-    <div class="glide-chip-row">
-      <span class="glide-chip">Calm start</span><span class="glide-chip">Power 10</span><span class="glide-chip">Rate shift</span><span class="glide-chip">Settle</span><span class="glide-chip">Sprint</span>
-    </div>
+        f"""
+<div class="glide-quick-card">
+  <div class="glide-quick-top">
+    <div class="glide-upload-cta">⇧ &nbsp; Upload recording</div>
+    <div class="glide-quick-tag">Specialized coach feedback</div>
   </div>
+  <div class="glide-quick-title">Practice off the water. Make every call matter.</div>
+  <div class="glide-quick-copy">Upload a race or practice recording, or record a simulated race in the browser. GLIDE transcribes locally with Faster-Whisper, detects rowing calls, simulates ideal-world race response, and returns feedback only for the focus areas you select.</div>
+  <div class="glide-chip-row">
+    <span class="glide-chip">Communication</span><span class="glide-chip">Power 10</span><span class="glide-chip">Rate shift</span><span class="glide-chip">Settle</span><span class="glide-chip">Sprint</span><span class="glide-chip">Rhythm</span>
+  </div>
+  <div class="glide-tab-visits" style="margin-top:14px;margin-bottom:0;">Live community usage · <strong>{visitor_count:,}</strong> cumulative app visits</div>
 </div>
         """,
         unsafe_allow_html=True,
@@ -963,6 +755,7 @@ def render_console(
     selected_focus: list[str],
     model_name: str,
     api_key: str | None,
+    visitor_count: int,
 ) -> None:
     st.markdown(
         """
@@ -980,6 +773,7 @@ def render_console(
     )
 
     with tab_upload:
+        render_tab_visitor_counter(visitor_count)
         with st.container(border=True):
             st.markdown("### Upload coxing audio")
             st.caption(
@@ -1009,6 +803,7 @@ def render_console(
                 analyze_transcript(result["text"], selected_focus, scenario, api_key, "upload")
 
     with tab_record:
+        render_tab_visitor_counter(visitor_count)
         with st.container(border=True):
             st.markdown("### Simulated race recording")
             st.caption("Practice in a low-pressure environment and analyze the call immediately afterward.")
@@ -1039,6 +834,7 @@ def render_console(
                 analyze_transcript(result["text"], selected_focus, scenario, api_key, "recorded")
 
     with tab_demo:
+        render_tab_visitor_counter(visitor_count)
         with st.container(border=True):
             st.markdown("### Demo transcript")
             st.caption("Try the full analysis pipeline without uploading an audio file.")
@@ -1049,11 +845,14 @@ def render_console(
 
 def main() -> None:
     inject_glide_css()
-    render_header()
+    visitor_result = get_session_visitor_count()
+    visitor_count = visitor_result.count
+    render_fixed_visitor_counter(visitor_count)
+    render_header(visitor_count)
 
     top_left, top_right = st.columns([7, 5], gap="medium")
     with top_left:
-        render_coach_card()
+        render_upload_prompt_card(visitor_count)
     with top_right:
         scenario, selected_focus, model_name, api_key = session_setup()
 
@@ -1064,7 +863,7 @@ def main() -> None:
     with lower_right:
         render_recent_and_live(scenario)
 
-    render_console(scenario, selected_focus, model_name, api_key)
+    render_console(scenario, selected_focus, model_name, api_key, visitor_count)
 
     with st.expander("Current scope & future upgrades"):
         st.markdown(
@@ -1077,10 +876,10 @@ def main() -> None:
         )
 
     st.markdown(
-        """
+        f"""
 <div class="glide-footer">
   <span>GLIDE · rhythm, breath, sync · CoxingCoachAI</span>
-  <span>Author Julia Hu · Advisor Dr. Qingyang Xiao</span>
+  <span>Author Julia Hu · {visitor_count:,} cumulative app visits</span>
 </div>
         """,
         unsafe_allow_html=True,

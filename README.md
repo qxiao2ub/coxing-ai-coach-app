@@ -1,59 +1,85 @@
 # CoxingCoachAI
 
-**AI-powered off-water coxswain training** with a Streamlit interface migrated from the supplied GLIDE / Deep Frost Command UI design.
+**AI-powered off-water coxswain training** with a Streamlit interface migrated from the supplied **GLIDE Morning Lake** UI package.
 
-**Author:** Julia Hu  
-**Advisor:** Dr. Qingyang Xiao
+**Author:** Julia Hu
 
-Live-app target: https://coxing-ai-coach.streamlit.app/  
-GitHub repository: https://github.com/qxiao2ub/coxing-ai-coach-app
+Live app: https://coxing-ai-coach.streamlit.app/  
+GitHub: https://github.com/qxiao2ub/coxing-ai-coach-app
 
-## What this version includes
+## What is included
 
-- GLIDE dark, glassmorphism-inspired rowing interface migrated to Streamlit.
-- Local Faster-Whisper transcription for `.m4a`, `.wav`, `.mp3`, `.webm`, `.mp4`, `.mpeg`, and `.mpga` recordings.
-- No `OPENAI_API_KEY` required for transcription or the built-in coaching mode.
+- Morning Lake GLIDE UI migrated into Streamlit with the supplied rowing-lake imagery, light glassmorphism cards, blue/ice accents, outing summary, recent-session cards, live-rate visualization, and responsive styling.
+- The complete supplied UI source is preserved under `ui_reference/glide-code-original/` for design traceability.
+- Local Faster-Whisper transcription for `.m4a`, `.wav`, `.mp3`, `.webm`, `.mp4`, `.mpeg`, and `.mpga`.
+- No OpenAI API key required for transcription or built-in rule-based coaching.
 - Browser microphone recording with `st.audio_input`.
-- Editable transcript review before coaching analysis.
-- User-selected focus areas; leaving the list blank produces general feedback.
-- Transcript metrics and rowing-command detection.
-- Ideal-world race simulator for power 10s, rate shifts, settles, and sprints.
-- Stroke-rate and split telemetry charts.
-- Optional OpenAI-powered narrative feedback if an API key is later configured.
-- Author and advisor credits in the app and repository.
+- Editable transcript review before analysis.
+- User-selected coaching focus areas; leaving the selection blank produces general feedback.
+- Rowing command/event detection and transcript metrics.
+- Ideal-world race simulation for power 10s, rate shifts, settles, sprints, stroke rate, and split response.
+- Post-race focused feedback.
+- A visible cumulative app-visitor count in the header, training tabs, quick-start panel, floating badge, and footer.
+- Author-only public credit: **Julia Hu**.
+
+## Visitor counter: no database
+
+The repository contains two counter modes:
+
+1. **Persistent GitHub-file mode — recommended for deployment.** The app stores the count in `data/visitor_count.json` on a separate `usage-data` branch. This is not a database and avoids changing the deployed `main` branch on each visit.
+2. **Local-file fallback.** If no GitHub token is configured, the app still counts visits in a local JSON file. This survives normal Streamlit reruns, but Streamlit Community Cloud can recreate its container, so local-only storage cannot guarantee a never-reset total.
+
+### Enable the persistent never-reset mode
+
+Create a **fine-grained GitHub personal access token** restricted to the `qxiao2ub/coxing-ai-coach-app` repository with **Contents: Read and write** permission. Then add the following to **Streamlit Community Cloud → App settings → Secrets**:
+
+```toml
+[github_counter]
+token = "github_pat_..."
+repo = "qxiao2ub/coxing-ai-coach-app"
+path = "data/visitor_count.json"
+branch = "usage-data"
+source_branch = "main"
+```
+
+The app automatically creates `usage-data` from `main` the first time persistent counting is used. It increments once per new Streamlit browser session rather than on every widget rerun.
 
 ## Streamlit deployment
 
 1. Extract this ZIP.
-2. Upload the **contents of this folder** to the root of `qxiao2ub/coxing-ai-coach-app`.
-3. Confirm the repository root contains `app.py`, `requirements.txt`, `.streamlit/`, `coxing_ai/`, and `assets/`.
-4. In Streamlit Community Cloud, choose the repository and set the app entrypoint to `app.py`.
-5. No Streamlit secret is required for local transcription or local feedback.
-6. The first transcription may take longer because the selected Faster-Whisper model must be downloaded into the running environment.
+2. Upload the **contents of the extracted folder** to the root of `qxiao2ub/coxing-ai-coach-app`.
+3. Confirm `app.py`, `requirements.txt`, `.streamlit/`, `coxing_ai/`, `assets/`, and `data/` are at the repository root.
+4. In Streamlit Community Cloud, use `app.py` as the main file.
+5. Local transcription works without secrets.
+6. Add the `[github_counter]` secret above if you want the cumulative count to persist through Streamlit container replacement.
+7. The first transcription can take longer because Faster-Whisper downloads the selected model.
 
 ## Architecture
 
 ```text
-Browser / Streamlit UI
+Browser / Streamlit Morning Lake UI
+        |
+        +--> Visitor session
+        |       |
+        |       +--> GitHub usage-data JSON counter (persistent, no DB)
+        |       +--> local JSON fallback
         |
         +--> Uploaded audio or browser recording
-        |         |
-        |         +--> Local Faster-Whisper speech-to-text
-        |                    |
-        |                    +--> Editable transcript
-        |                              |
-        +------------------------------+
-                                       |
-                               Transcript metrics
-                                       |
-                               Coxing event detector
-                                       |
-                               Ideal-world simulator
-                               /                 \
-                    Stroke-rate telemetry     Split telemetry
-                               \                 /
-                                Focus-constrained
-                                post-race feedback
+                  |
+                  +--> Local Faster-Whisper speech-to-text
+                              |
+                              +--> Editable transcript
+                                      |
+                              Transcript metrics
+                                      |
+                              Coxing event detector
+                                      |
+                              Ideal-world simulator
+                              /                 \
+                   Stroke-rate telemetry     Split telemetry
+                              \                 /
+                               Focus-constrained
+                               post-race feedback
 ```
 
 ## Local run
@@ -66,22 +92,16 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
-## Optional enhanced feedback
+## Optional enhanced narrative feedback
 
-The app works without an API key. If you later want the optional LLM narrative feedback path, add this to Streamlit Secrets:
+The app works without an OpenAI API key. If you later want the optional LLM narrative path:
 
 ```toml
 [openai]
 api_key = "YOUR_KEY_HERE"
 ```
 
-Never commit a real key to GitHub.
-
-## UI migration notes
-
-The supplied TypeScript/Tailwind concept used a **Deep Frost Command** palette, glass cards, cyan/ice accents, a coach panel, outing summary, recent-session cards, and live-rate visualization. These elements were reimplemented using Streamlit-native widgets plus custom CSS so the deployed app keeps its Python/Streamlit architecture while closely following the supplied UI.
-
-A compact copy of the supplied reference source is kept under `ui_reference/` for design traceability. The runtime Streamlit app does **not** depend on Node, Bun, Vite, or React.
+Never commit a real token or API key to GitHub.
 
 ## Repository layout
 
@@ -92,16 +112,21 @@ A compact copy of the supplied reference source is kept under `ui_reference/` fo
 ├── README.md
 ├── DEPLOYMENT_CHECKLIST.md
 ├── UI_MIGRATION_NOTES.md
+├── secrets_template.toml
 ├── .streamlit/
 │   └── config.toml
 ├── assets/
-│   └── rowing-lake.jpg
+│   ├── rowing-lake.jpg
+│   └── favicon.ico
 ├── coxing_ai/
 │   ├── audio_features.py
 │   ├── core.py
 │   ├── feedback.py
 │   ├── simulator.py
-│   └── transcription.py
+│   ├── transcription.py
+│   └── visitor_counter.py
+├── data/
+│   └── visitor_count.json
 ├── notebooks/
 │   └── CoxingCoachAI_Local_Whisper.ipynb
 ├── sample_data/
@@ -109,9 +134,9 @@ A compact copy of the supplied reference source is kept under `ui_reference/` fo
 └── ui_reference/
     ├── index.tsx
     ├── styles.css
-    └── README_original_ui.md
+    └── glide-code-original/   # complete supplied UI source package
 ```
 
-## Important MVP behavior
+## Current modeling assumption
 
-The simulator intentionally uses the project's ideal-world assumption: performance changes are simulated from recognized calls rather than inferred from real boat sensors. Future versions can replace these assumptions with telemetry, acoustic event detection, video analysis, or connected CoxBox data.
+The simulator intentionally uses the project’s ideal-world assumption: recognized coxing calls cause simulated performance changes rather than being validated against real boat sensors. Future versions can replace these assumptions with CoxBox telemetry, acoustic cadence detection, steering/video analysis, and longitudinal athlete/session data.

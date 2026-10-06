@@ -1,33 +1,32 @@
-# GLIDE UI Migration Notes
+# UI migration notes — GLIDE Morning Lake
 
-This repository migrates the attached GLIDE frontend concept into the Streamlit application while preserving the existing Python AI pipeline.
+The attached GLIDE UI package was a TypeScript/TanStack/Tailwind design. The deployment target remains Python + Streamlit, so the design was translated into Streamlit-native layout and custom CSS while retaining the app’s working AI pipeline.
 
-## Design elements carried over
+## Preserved design elements
 
-- Deep teal / frost background palette.
-- Cyan "ice" accent color.
-- Glassmorphism cards with thin illuminated borders.
-- GLIDE brand header and console navigation motif.
-- Coach Anders conversation card.
-- Today's outing summary with lake rowing imagery.
+- GLIDE wordmark and compact navigation treatment.
+- Morning-lake photographic background and fixed-cover visual treatment.
+- Light translucent glass cards with blue/ice accents.
+- Ambient radial glow layers.
+- Upload-recording call to action.
+- Today’s outing / training profile card.
+- Three summary metrics.
 - Recent-session cards.
-- Live crew / stroke-rate display.
-- Compact monospace labels, rounded cards, and technical-console styling.
+- Live crew / target-rate bar visualization.
+- Responsive mobile behavior.
+- Monospace uppercase micro-labels and rounded UI surfaces.
 
-## Streamlit mappings
+The original supplied source package is kept intact under `ui_reference/glide-code-original/` except for the uploaded `.git` pointer file, which is intentionally omitted from the distributable repository.
 
-| Original UI concept | Streamlit implementation |
-|---|---|
-| React/Tailwind dashboard | Streamlit wide-layout dashboard |
-| Frost cards | `st.container(border=True)` + custom CSS |
-| Coach chat card | HTML/CSS presentation card |
-| Session setup | Native selectboxes, sliders, multiselect, and expander |
-| Recent sessions | HTML/CSS cards |
-| Live crew bars | HTML/CSS rate visualization |
-| Training workflow | Streamlit tabs |
-| Upload interaction | `st.file_uploader` |
-| Microphone input | `st.audio_input` |
-| Telemetry visualization | `st.line_chart` |
-| AI feedback | Existing Python feedback engine |
+## Functional additions layered onto the design
 
-The runtime does not require React, Vite, Node, or Bun. This is intentional so Streamlit Community Cloud can launch the app directly from `app.py`.
+- Local Faster-Whisper transcription.
+- Upload and browser-recording workflows.
+- Editable transcript and timestamped segments.
+- Focus-area coaching.
+- Transcript metrics and call detection.
+- Ideal-world telemetry simulator.
+- Post-race feedback.
+- Author-only credit for Julia Hu.
+- Cumulative visitor counter shown throughout the app.
+- Optional GitHub-branch persistence for the visitor counter without using a database.

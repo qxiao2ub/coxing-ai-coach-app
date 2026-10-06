@@ -1,7 +1,6 @@
 """Core package for CoxingCoachAI."""
 
 __author__ = "Julia Hu"
-__advisor__ = "Dr. Qingyang Xiao"
 
 from .core import DEFAULT_SCENARIO, FOCUS_AREAS
 from .feedback import generate_feedback
